@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="googlebot" content="noindex, nofollow">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+
+    <title>CDVM Regatta Field v4.5</title>
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+
+    <link rel="stylesheet" href="./css/styles.css?v=4.3">
+    <link rel="manifest" href="./manifest.json">
+
+    <meta name="theme-color" content="#0033cc">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <meta
+        name="apple-mobile-web-app-title"
+        content="Regatta Field"
+    >
+
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="default"
+    >
+
+    <link
+        rel="apple-touch-icon"
+        href="./icons/icon-192.png"
+    >
+</head>
+
+<body>
+
+    <div id="sidebar">
+
+        <h1 class="title">
+
+    <div class="title-left">
+
+        <img
+            src="./icons/guidone-cdvm.png"
+            alt="CDVM"
+            class="title-guidone"
+        >
+
+        <span>
+            CDVM Regatta Field v4.5
+        </span>
+
+    </div>
+        </h1>
+
+        <!-- =====================
+             COURSE FORM
+        ====================== -->
+
+        <div class="form-grid">
+
+            <div class="input-card full">
+                <label>
+                    <i class="fa-solid fa-diagram-project"></i>
+                    Course Diagram
+                </label>
+
+                <select id="courseType" class="course-select">
+                    <option value="LA">LA / WA</option>
+                    <option value="TWA">TWA / TLA</option>
+                    <option value="TRAPEZOID">Trapezoid I-O</option>
+                </select>
+            </div>
+
+            <div class="input-card full">
+                <label>Barca Comitato — Lat (N)</label>
+
+                <div class="degree-input">
+                    <input type="number" id="latDeg" value="45">
+                    <span>°</span>
+
+                    <input type="text" id="latMin" value="36,207">
+                    <span>'</span>
+                </div>
+            </div>
+
+            <div class="input-card full">
+                <label>Barca Comitato — Lon (E)</label>
+
+                <div class="degree-input">
+                    <input type="number" id="lonDeg" value="13">
+                    <span>°</span>
+
+                    <input type="text" id="lonMin" value="47,155">
+                    <span>'</span>
+                </div>
+            </div>
+
+            <button id="useGpsRcBtn" class="btn-gps">
+                <i class="fa-solid fa-location-crosshairs"></i>
+                USA GPS PER BARCA COMITATO
+            </button>
+
+            <div class="input-card full">
+                <label>Boa Pin reale — Lat (N) opzionale</label>
+
+                <div class="degree-input">
+                    <input type="number" id="pinLatDeg" placeholder="45">
+                    <span>°</span>
+
+                    <input type="text" id="pinLatMin" placeholder="36,250">
+                    <span>'</span>
+                </div>
+            </div>
+
+            <div class="input-card full">
+                <label>Boa Pin reale — Lon (E) opzionale</label>
+
+                <div class="degree-input">
+                    <input type="number" id="pinLonDeg" placeholder="13">
+                    <span>°</span>
+
+                    <input type="text" id="pinLonMin" placeholder="47,200">
+                    <span>'</span>
+                </div>
+            </div>
+
+            <button id="useGpsPinBtn" class="btn-gps">
+                <i class="fa-solid fa-location-crosshairs"></i>
+                USA GPS PER PIN
+            </button>
+
+            <div class="input-card">
+                <label>
+                    <i class="fa-solid fa-wind"></i>
+                    Vento (TWD °)
+                </label>
+
+                <input type="number" id="twd" value="320">
+            </div>
+
+            <div class="input-card">
+                <label>
+                    <i class="fa-solid fa-ruler"></i>
+                    Linea (m)
+                </label>
+
+                <input type="number" id="lineLen" value="100">
+            </div>
+
+            <div class="input-card">
+                <label>
+                    <i class="fa-solid fa-arrow-up"></i>
+                    Bolina (NM)
+                </label>
+
+                <input type="number" id="distUp" value="0.4" step="0.1">
+            </div>
+
+            <div class="input-card">
+                <label>
+                    <i class="fa-solid fa-arrow-down-right"></i>
+                    Lasco (NM)
+                </label>
+
+                <input type="number" id="distReach" value="0.4" step="0.1">
+            </div>
+
+            <div class="input-card">
+                <label>
+                    <i class="fa-solid fa-angle-up"></i>
+                    Angolo B2 (°)
+                </label>
+
+                <input type="number" id="angle2" value="60">
+            </div>
+
+            <div class="input-card">
+                <label>
+                    <i class="fa-solid fa-arrow-down"></i>
+                    Poppa (NM)
+                </label>
+
+                <input type="number" id="distDown" value="0.40" step="0.1">
+            </div>
+
+            <div class="input-card">
+                <label>
+                    <i class="fa-solid fa-gate-open"></i>
+                    Gate (m)
+                </label>
+
+                <input type="number" id="gateWidth" value="50">
+            </div>
+
+            <div class="input-card">
+                <label>
+                    <i class="fa-solid fa-location-arrow"></i>
+                    Offset (m)
+                </label>
+
+                <input type="number" id="offsetDistance" value="100">
+            </div>
+
+            <div class="input-card">
+                <label>
+                    <i class="fa-solid fa-compass"></i>
+                    Offset (°)
+                </label>
+
+                <input type="number" id="offsetAngle" value="75">
+            </div>
+
+            <div class="input-card">
+                <label>
+                    <i class="fa-solid fa-sliders"></i>
+                    G4 (% Poppa)
+                </label>
+
+                <input
+                    type="number"
+                    id="trapezoidFactor"
+                    value="0.60"
+                    min="0.30"
+                    max="1.00"
+                    step="0.05"
+                >
+            </div>
+
+        </div>
+
+        <!-- =====================
+             TOGGLES
+        ====================== -->
+
+        <div class="toggle-card">
+
+            <div class="toggle-row">
+                <span>
+                    <i class="fa-solid fa-location-arrow"></i>
+                    Offset Mark
+                </span>
+
+                <label class="switch">
+                    <input type="checkbox" id="showOffset">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <span>
+                    <i class="fa-solid fa-buoy"></i>
+                    Boa 3S
+                </span>
+
+                <label class="switch">
+                    <input type="checkbox" id="show3S" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <span>
+                    <i class="fa-solid fa-buoy"></i>
+                    Boa 3P
+                </span>
+
+                <label class="switch">
+                    <input type="checkbox" id="show3P" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <span>
+                    <i class="fa-solid fa-buoy"></i>
+                    Boa 4S
+                </span>
+
+                <label class="switch">
+                    <input type="checkbox" id="show4S" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <span>
+                    <i class="fa-solid fa-buoy"></i>
+                    Boa 4P
+                </span>
+
+                <label class="switch">
+                    <input type="checkbox" id="show4P" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+        </div>
+
+        <!-- =====================
+             AREA AUTORIZZATA
+        ====================== -->
+
+        <div class="toggle-card area-card">
+
+            <button
+                id="toggleAreaPanelBtn"
+                class="area-title area-title-btn"
+                type="button"
+            >
+                <span>
+                    <i class="fa-solid fa-draw-polygon"></i>
+                    Area Autorizzata
+                </span>
+
+                <i
+                    id="areaPanelIcon"
+                    class="fa-solid fa-chevron-down"
+                ></i>
+            </button>
+
+            <div
+                id="areaPanelContent"
+                class="area-panel collapsed"
+            >
+
+                <div class="input-card full">
+                    <label>Nome area</label>
+
+                    <input
+                        type="text"
+                        id="areaName"
+                        placeholder="Es. Campo Optimist Barcola"
+                    >
+                </div>
+
+                <div class="input-card full">
+                    <label>Aree salvate</label>
+
+                    <select
+                        id="savedAreaSelect"
+                        class="course-select"
+                    >
+                        <option value="">
+                            Nessuna area selezionata
+                        </option>
+                    </select>
+                </div>
+
+                <!-- WP1 -->
+
+                <div class="input-card full">
+                    <label>WP1</label>
+
+                    <div class="degree-input">
+                        <input type="number" id="areaWp1LatDeg" placeholder="45">
+                        <span>°</span>
+
+                        <input type="text" id="areaWp1LatMin" placeholder="36,000">
+                        <span>' N</span>
+                    </div>
+
+                    <div class="degree-input">
+                        <input type="number" id="areaWp1LonDeg" placeholder="13">
+                        <span>°</span>
+
+                        <input type="text" id="areaWp1LonMin" placeholder="47,000">
+                        <span>' E</span>
+                    </div>
+                </div>
+
+                <!-- WP2 -->
+
+                <div class="input-card full">
+                    <label>WP2</label>
+
+                    <div class="degree-input">
+                        <input type="number" id="areaWp2LatDeg" placeholder="45">
+                        <span>°</span>
+
+                        <input type="text" id="areaWp2LatMin" placeholder="36,000">
+                        <span>' N</span>
+                    </div>
+
+                    <div class="degree-input">
+                        <input type="number" id="areaWp2LonDeg" placeholder="13">
+                        <span>°</span>
+
+                        <input type="text" id="areaWp2LonMin" placeholder="47,000">
+                        <span>' E</span>
+                    </div>
+                </div>
+
+                <!-- WP3 -->
+
+                <div class="input-card full">
+                    <label>WP3</label>
+
+                    <div class="degree-input">
+                        <input type="number" id="areaWp3LatDeg" placeholder="45">
+                        <span>°</span>
+
+                        <input type="text" id="areaWp3LatMin" placeholder="36,000">
+                        <span>' N</span>
+                    </div>
+
+                    <div class="degree-input">
+                        <input type="number" id="areaWp3LonDeg" placeholder="13">
+                        <span>°</span>
+
+                        <input type="text" id="areaWp3LonMin" placeholder="47,000">
+                        <span>' E</span>
+                    </div>
+                </div>
+
+                <!-- WP4 -->
+
+                <div class="input-card full">
+                    <label>WP4 opzionale</label>
+
+                    <div class="degree-input">
+                        <input type="number" id="areaWp4LatDeg" placeholder="45">
+                        <span>°</span>
+
+                        <input type="text" id="areaWp4LatMin" placeholder="36,000">
+                        <span>' N</span>
+                    </div>
+
+                    <div class="degree-input">
+                        <input type="number" id="areaWp4LonDeg" placeholder="13">
+                        <span>°</span>
+
+                        <input type="text" id="areaWp4LonMin" placeholder="47,000">
+                        <span>' E</span>
+                    </div>
+                </div>
+
+                <!-- WP5 -->
+
+                <div class="input-card full">
+                    <label>WP5 opzionale</label>
+
+                    <div class="degree-input">
+                        <input type="number" id="areaWp5LatDeg" placeholder="45">
+                        <span>°</span>
+
+                        <input type="text" id="areaWp5LatMin" placeholder="36,000">
+                        <span>' N</span>
+                    </div>
+
+                    <div class="degree-input">
+                        <input type="number" id="areaWp5LonDeg" placeholder="13">
+                        <span>°</span>
+
+                        <input type="text" id="areaWp5LonMin" placeholder="47,000">
+                        <span>' E</span>
+                    </div>
+                </div>
+
+                <div class="input-card full">
+                    <label>Colore area</label>
+
+                    <input
+                        type="color"
+                        id="areaColor"
+                        value="#0033cc"
+                    >
+                </div>
+
+                <div class="input-card full">
+                    <label>Opacità area</label>
+
+                    <input
+                        type="number"
+                        id="areaOpacity"
+                        value="0.20"
+                        min="0.05"
+                        max="0.70"
+                        step="0.05"
+                    >
+                </div>
+
+                <div class="btn-row-single">
+
+                    <button
+                        id="drawAreaBtn"
+                        class="btn-primary"
+                    >
+                        <i class="fa-solid fa-draw-polygon"></i>
+                        DISEGNA AREA
+                    </button>
+
+                    <button
+                        id="resetAreaBtn"
+                        class="btn-warning"
+                    >
+                        <i class="fa-solid fa-trash"></i>
+                        RESET AREA
+                    </button>
+
+                </div>
+
+                <div class="btn-row-single">
+
+                    <button
+                        id="saveAreaBtn"
+                        class="btn-success"
+                    >
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        SALVA AREA
+                    </button>
+
+                    <button
+                        id="loadAreaBtn"
+                        class="btn-info"
+                    >
+                        <i class="fa-solid fa-folder-open"></i>
+                        CARICA AREA
+                    </button>
+
+                </div>
+
+                <button
+                    id="deleteAreaBtn"
+                    class="btn-warning btn-full"
+                >
+                    <i class="fa-solid fa-trash-can"></i>
+                    ELIMINA AREA
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- =====================
+             MAIN BUTTONS
+        ====================== -->
+
+        <div class="btn-row-single">
+
+            <button
+                id="drawCourseBtn"
+                class="btn-primary"
+            >
+                <i class="fa-solid fa-pencil"></i>
+                DISEGNA CAMPO
+            </button>
+
+            <button
+                id="resetPinBtn"
+                class="btn-warning"
+            >
+                <i class="fa-solid fa-rotate-left"></i>
+                RESET PIN
+            </button>
+
+        </div>
+        <div class="toggle-card">
+
+    <div class="input-card full">
+
+        <label>
+            <i class="fa-solid fa-location-arrow"></i>
+            Go To Boa
+        </label>
+
+        <select
+            id="gotoSelect"
+            class="course-select"
+        >
+            <option value="">
+                Disegna prima il campo
+            </option>
+        </select>
+
+    </div>
+
+    <button
+        id="gotoBtn"
+        class="btn-primary btn-full"
+    >
+        <i class="fa-solid fa-route"></i>
+        GO TO
+    </button>
+
+    <div
+        id="gotoOutput"
+        class="results-card"
+    ></div>
+
+</div>
+        <!-- =====================
+             CAMPI SALVATI
+        ====================== -->
+
+        <div class="toggle-card saved-field-panel">
+
+            <div class="toggle-row saved-field-title">
+                <span>
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    CAMPI SALVATI
+                </span>
+            </div>
+
+            <div class="form-grid saved-field-grid">
+
+                <div class="input-card full">
+                    <label for="fieldName">
+                        <i class="fa-solid fa-pen"></i>
+                        Nome campo
+                    </label>
+
+                    <input
+                        type="text"
+                        id="fieldName"
+                        placeholder="Es. Zonale ILCA - Giorno 1"
+                    >
+                </div>
+
+                <div class="input-card full">
+                    <label for="savedFieldSelect">
+                        <i class="fa-solid fa-folder-open"></i>
+                        Archivio campi
+                    </label>
+
+                    <select
+                        id="savedFieldSelect"
+                        class="course-select"
+                    >
+                        <option value="">
+                            — seleziona campo —
+                        </option>
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="btn-row export-row saved-field-buttons">
+
+                <button
+                    id="saveFieldBtn"
+                    class="btn-success"
+                >
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    SALVA
+                </button>
+
+                <button
+                    id="loadFieldBtn"
+                    class="btn-info"
+                >
+                    <i class="fa-solid fa-folder-open"></i>
+                    CARICA
+                </button>
+
+                <button
+                    id="deleteFieldBtn"
+                    class="btn-danger"
+                >
+                    <i class="fa-solid fa-trash"></i>
+                    ELIMINA
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- =====================
+             EXPORT
+        ====================== -->
+
+        <div class="btn-row export-row">
+
+            <button
+                id="exportGoogleBtn"
+                class="btn-success"
+            >
+                <i class="fa-solid fa-earth-europe"></i>
+                GOOGLE
+            </button>
+
+            <button
+                id="exportGarminBtn"
+                class="btn-info"
+            >
+                <i class="fa-solid fa-location-dot"></i>
+                GARMIN
+            </button>
+
+            <button
+                id="exportNavionicsBtn"
+                class="btn-info"
+            >
+                <i class="fa-solid fa-route"></i>
+                NAVIONICS
+            </button>
+
+            <button
+                id="exportPdfBtn"
+                class="btn-warning"
+            >
+                <i class="fa-solid fa-file-pdf"></i>
+                PDF
+            </button>
+
+        </div>
+
+        <button
+            id="copyBtn"
+            class="btn-info btn-full"
+        >
+            <i class="fa-solid fa-copy"></i>
+            COPIA TESTO
+        </button>
+
+        <!-- =====================
+             COORDINATES
+        ====================== -->
+
+        <div
+            id="coordOutput"
+            class="results-card"
+        ></div>
+
+    </div>
+
+    <!-- =====================
+         MAP
+    ====================== -->
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script
+         type="module"
+    src="./js/app.js?v=4.3"
+    ></script>
+
+</body>
+
+</html>
