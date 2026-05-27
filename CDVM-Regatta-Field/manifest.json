@@ -1,0 +1,22 @@
+{
+  "name": "CDVM Regatta Field 4.5",
+  "short_name": "Regatta Field 4.5",
+  "description": "App per il posizionamento del campo di regata",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#eef2f7",
+  "theme_color": "#0b4dbb",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
