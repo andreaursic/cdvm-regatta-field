@@ -60,6 +60,7 @@ import {
 } from './geo.js';
 
 let currentGpsPosition = null;
+let activeGoToIndex = null;
 
 const DISABLE_SERVICE_WORKER_IN_DEV = true;
 
@@ -177,6 +178,8 @@ function drawCourse() {
         populateGoToSelect(result.points);
         fitMapToPoints(result.points);
 
+        updateGoToLive();
+
     } catch (err) {
         console.error('Errore disegno campo:', err);
         alert(`Impossibile disegnare il campo: ${err.message}`);
@@ -203,6 +206,9 @@ function drawInitialCommitteeOnly() {
         appState.currentPoints = [];
 
         renderCoordinates([]);
+        populateGoToSelect([]);
+
+        clearGoToLine();
 
         drawCommitteeOnly(rc);
 
@@ -235,7 +241,10 @@ function startGpsTracking() {
             currentGpsPosition = {
                 lat: position.coords.latitude,
                 lon: position.coords.longitude,
-                accuracy: position.coords.accuracy
+                accuracy: position.coords.accuracy,
+                speed: position.coords.speed,
+                heading: position.coords.heading,
+                timestamp: Date.now()
             };
 
             updateUserPosition(
@@ -243,13 +252,15 @@ function startGpsTracking() {
                 currentGpsPosition.lon,
                 currentGpsPosition.accuracy
             );
+
+            updateGoToLive();
         },
         error => {
             console.warn('Errore GPS:', error.message);
         },
         {
             enableHighAccuracy: true,
-            maximumAge: 5000,
+            maximumAge: 3000,
             timeout: 10000
         }
     );
@@ -425,6 +436,7 @@ function setupEventListeners() {
     const deleteFieldBtn = document.getElementById('deleteFieldBtn');
 
     const gotoBtn = document.getElementById('gotoBtn');
+    const gotoSelect = document.getElementById('gotoSelect');
 
     const exportGoogleBtn = document.getElementById('exportGoogleBtn');
     const exportGarminBtn = document.getElementById('exportGarminBtn');
@@ -452,6 +464,11 @@ function setupEventListeners() {
     deleteFieldBtn?.addEventListener('click', deleteSelectedField);
 
     gotoBtn?.addEventListener('click', handleGoTo);
+
+    gotoSelect?.addEventListener('change', () => {
+        activeGoToIndex = Number(gotoSelect.value);
+        updateGoToLive();
+    });
 
     [
         'pinLatDeg',
@@ -630,8 +647,9 @@ function unregisterServiceWorkerAndClearCaches() {
             });
     }
 }
+
 /* =========================
-   GO TO
+   GO TO / POSABOE
 ========================= */
 
 function populateGoToSelect(points) {
@@ -641,15 +659,21 @@ function populateGoToSelect(points) {
 
     if (!select) return;
 
+    const previousValue = select.value;
+
     select.innerHTML = '';
 
     if (!Array.isArray(points) || !points.length) {
+
+        activeGoToIndex = null;
 
         select.innerHTML = `
             <option value="">
                 Nessuna boa disponibile
             </option>
         `;
+
+        clearGoToLine();
 
         return;
     }
@@ -666,6 +690,17 @@ function populateGoToSelect(points) {
 
         select.appendChild(option);
     });
+
+    if (
+        previousValue !== '' &&
+        Number(previousValue) < points.length
+    ) {
+        select.value = previousValue;
+    }
+
+    if (activeGoToIndex !== null) {
+        select.value = activeGoToIndex;
+    }
 }
 
 function handleGoTo() {
@@ -673,18 +708,42 @@ function handleGoTo() {
     const select =
         document.getElementById('gotoSelect');
 
+    if (!select) return;
+
+    activeGoToIndex = Number(select.value);
+
+    if (!Number.isFinite(activeGoToIndex)) {
+        alert('Seleziona una boa.');
+        return;
+    }
+
+    updateGoToLive(true);
+}
+
+function updateGoToLive(showAlert = false) {
+
     const output =
         document.getElementById('gotoOutput');
 
-    if (!select || !output) return;
+    if (!output) return;
+
+    if (
+        activeGoToIndex === null ||
+        activeGoToIndex === undefined ||
+        !Array.isArray(appState.currentPoints)
+    ) {
+        return;
+    }
 
     const point =
-        appState.currentPoints?.[
-            Number(select.value)
-        ];
+        appState.currentPoints[activeGoToIndex];
 
     if (!point) {
-        alert('Seleziona una boa.');
+        if (showAlert) {
+            alert('Seleziona una boa.');
+        }
+
+        clearGoToLine();
         return;
     }
 
@@ -692,7 +751,10 @@ function handleGoTo() {
         currentGpsPosition;
 
     if (!gps) {
-        alert('GPS non disponibile.');
+        if (showAlert) {
+            alert('GPS non disponibile. Attendi qualche secondo oppure autorizza la posizione.');
+        }
+
         return;
     }
 
@@ -712,27 +774,126 @@ function handleGoTo() {
             point.lon
         );
 
+    const speedMs =
+        Number.isFinite(gps.speed)
+            ? gps.speed
+            : null;
+
+    const speedKn =
+        speedMs !== null
+            ? speedMs * 1.943844
+            : null;
+
+    const etaText =
+        speedMs && speedMs > 0.4
+            ? formatEta(distance / speedMs)
+            : 'N/D';
+
     drawGoToLine(gps, point);
 
     output.innerHTML = `
-        <div style="font-weight:700;">
-            ${shortGoToName(point.name)}
-        </div>
+        <div style="
+            padding:12px 14px;
+            color:#0033cc;
+            font-weight:800;
+        ">
 
-        <div>
-            Rotta:
-            <strong>
-                ${Math.round(bearing)}°
-            </strong>
-        </div>
+            <div style="
+                display:flex;
+                align-items:center;
+                gap:12px;
+                margin-bottom:10px;
+            ">
 
-        <div>
-            Distanza:
-            <strong>
-                ${(distance / 1852).toFixed(2)} NM
-            </strong>
+                <div style="
+                    width:44px;
+                    height:44px;
+                    border-radius:50%;
+                    background:#0033cc;
+                    color:#ffffff;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    font-size:26px;
+                    font-weight:900;
+                    transform:rotate(${bearing}deg);
+                    flex-shrink:0;
+                ">
+                    ↑
+                </div>
+
+                <div>
+                    <div style="font-size:1.15rem;">
+                        GO TO ${shortGoToName(point.name)}
+                    </div>
+
+                    <div style="
+                        font-size:0.78rem;
+                        color:#64748b;
+                        font-weight:700;
+                    ">
+                        Modalità posaboe
+                    </div>
+                </div>
+
+            </div>
+
+            <div style="font-size:1rem;line-height:1.55;">
+                Rotta:
+                <strong>${Math.round(bearing)}°</strong>
+            </div>
+
+            <div style="font-size:1rem;line-height:1.55;">
+                Distanza:
+                <strong>${(distance / 1852).toFixed(2)} NM</strong>
+                <span style="font-size:0.85rem;">
+                    (${Math.round(distance)} m)
+                </span>
+            </div>
+
+            <div style="font-size:1rem;line-height:1.55;">
+                Velocità:
+                <strong>
+                    ${speedKn !== null ? speedKn.toFixed(1) + ' kn' : 'N/D'}
+                </strong>
+            </div>
+
+            <div style="font-size:1rem;line-height:1.55;">
+                ETA:
+                <strong>${etaText}</strong>
+            </div>
+
         </div>
     `;
+}
+
+function formatEta(seconds) {
+
+    if (!Number.isFinite(seconds) || seconds < 0) {
+        return 'N/D';
+    }
+
+    if (seconds < 60) {
+        return `${Math.round(seconds)} s`;
+    }
+
+    const minutes =
+        Math.floor(seconds / 60);
+
+    const remainingSeconds =
+        Math.round(seconds % 60);
+
+    if (minutes < 60) {
+        return `${minutes} min ${remainingSeconds} s`;
+    }
+
+    const hours =
+        Math.floor(minutes / 60);
+
+    const remainingMinutes =
+        minutes % 60;
+
+    return `${hours} h ${remainingMinutes} min`;
 }
 
 function shortGoToName(name) {
